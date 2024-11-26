@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+    app_receiver:
+        build: ./app_receiver
+        container_name: app_receiver
+        depends_on:
+            - redis_queue
+        ports:
+            - "8000:8000"
+        environment:
+            - REDIS_HOST=redis_queue
+            - REDIS_PORT=6379
+
+    redis_queue:
+        image: redis:6.0-alpine
+        container_name: redis_queue
+        ports:
+            - "6379:6379"
+    
+    tourniquet:
+        build: ./tourniquet
+        container_name: tourniquet
+        volumes:
+            - ./data:/data
+        ports:
+            - "8001:8001"
+
+    access_module:
+        build: ./access_module
+        container_name: access_module
+        ports:
+            - "8002:8002"
+    
+    worker:
+        build: ./worker_processor 
+        container_name: worker
+        depends_on:
+            - redis_queue
+        environment:
+            - REDIS_HOST=redis_queue
+            - REDIS_PORT=6379
+        volumes:
+            - ./data:/data
